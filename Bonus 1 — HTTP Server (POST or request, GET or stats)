@@ -1,0 +1,23 @@
+// Handles every incoming HTTP connection
+void handle_client(SOCKET sock, RateLimiter& rl) {
+    // reads the HTTP request
+    recv(sock, buf, sizeof(buf)-1, 0);
+
+    if (method == "POST" && path == "/request") {
+        // extracts client_id and algo from URL
+        // ?client_id=alice&algo=fixed
+        auto res = rl.process(cid, algo);
+        // sends back JSON: ALLOWED or RATE_LIMITED
+        send_response(sock, 200, "application/json", ...);
+
+    } else if (method == "GET" && path == "/stats") {
+        // sends back full JSON stats
+        send_response(sock, 200, "application/json", 
+                      rl.stats_json());
+    }
+}
+
+// One thread per connection — handles concurrent HTTP clients
+std::thread([cfd, &rl]() { 
+    handle_client(cfd, rl); 
+}).detach();
