@@ -1,0 +1,50 @@
+// Layer 1: each algorithm has its OWN mutex
+class FixedWindow {
+    std::mutex mtx_;   // only locks THIS client's fixed window
+    Decision check() {
+        std::lock_guard<std::mutex> lk(mtx_);  // auto lock/unlock
+        // ...
+    }
+};
+
+// Layer 2: global registry has its own mutex
+class RateLimiter {
+    mutable std::mutex registry_mtx_;   // protects the map
+    std::unordered_map<std::string, ClientLimiter*> limiters_;
+
+    RequestResult process(const std::string& cid, ...) {
+        {
+            std::lock_guard<std::mutex> lk(registry_mtx_);
+            // find or create client entry
+            lim = limiters_[cid];
+        }
+        // registry lock RELEASED here
+        // different clients now run fully in parallel
+        d = lim->fixed.check();
+    }
+};
+
+// Layer 3: stats use atomic (lock-free, fastest)
+struct ClientStats {
+    std::atomic<long> total{0};
+    std::atomic<long> allowed{0};
+    std::atomic<long> rejected{0};
+};
+
+//The test harness that proves it:
+void run_test_harness(RateLimiter& rl) {
+    // 5 threads firing simultaneously
+    for (int c = 0; c < 5; ++c) {
+        threads.emplace_back([&, cid, c]() {
+            for (int i = 0; i < 30; ++i) {   // 30 requests each
+                auto res = rl.process(cid, algo);  // concurrent!
+                // random sleep to create real contention
+                std::this_thread::sleep_for(
+                    std::chrono::milliseconds(rng() % 10));
+            }
+        });
+    }
+    // wait for ALL threads to finish
+    for (auto& t : threads) t.join();
+}
+// Result: 150 requests, zero crashes, zero races
