@@ -1,0 +1,16 @@
+// Way 1: CLI arguments when starting the program
+./rate_limiter --max_requests=10 --window_seconds=60 --port=8080
+
+// Way 2: per-client custom limits in code
+rl.set_client_config("client3", {5, 60});
+// client3 now has limit=5, others have limit=10
+// This is why client3 got 15 rejections in your output!
+
+// Way 3: live update via /config HTTP endpoint (no restart needed)
+// POST /config   body: {"max_requests":5,"window_seconds":10}
+void update_config(Config nc) {
+    std::lock_guard<std::mutex> lk(registry_mtx_);
+    cfg_ = nc;
+    for (auto& p : limiters_)        // update ALL existing clients
+        p.second->reconfigure(nc.max_requests, nc.window_seconds);
+}
