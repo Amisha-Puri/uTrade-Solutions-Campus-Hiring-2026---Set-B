@@ -1,0 +1,10 @@
+// Each client has COMPLETELY INDEPENDENT state
+// client0 being rate-limited does NOT affect client1
+// No shared counter between clients
+// Each ClientLimiter is a separate object with separate mutexes
+
+std::unordered_map<std::string, ClientLimiter*> limiters_;
+//  "client0" -> its own FixedWindow + SlidingLog + TokenBucket
+//  "client1" -> its own FixedWindow + SlidingLog + TokenBucket
+//  "client3" -> its own (with tighter limit of 5)
+// One overloaded client cannot starve the others
