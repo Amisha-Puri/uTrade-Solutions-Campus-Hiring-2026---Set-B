@@ -1,0 +1,9 @@
+// Every single request prints this line:
+std::cout << "  [" << res.timestamp << "]"
+          << "  client=" << res.client_id
+          << "  algo="   << res.algorithm
+          << "  ==>  "   << decision_str(res.decision) << "\n";
+
+// Which produced your output:
+// [16:04:27.130]  client=client1  algo=sliding  ==>  ALLOWED
+// [16:04:27.322]  client=client3  algo=fixed    ==>  RATE_LIMITED
