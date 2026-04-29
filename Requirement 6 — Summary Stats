@@ -1,0 +1,18 @@
+void print_summary() const {
+    // Global totals
+    std::cout << "Global Total   : " << g_total_   << "\n";
+    std::cout << "Global Allowed : " << g_allowed_ << "\n";
+    std::cout << "Global Rejected: " << g_rejected_<< "\n";
+
+    // Per-client breakdown
+    for (auto& p : stats_) {
+        std::cout << p.first          // client name
+                  << p.second->total
+                  << p.second->allowed
+                  << p.second->rejected << "\n";
+    }
+}
+// Your output showed:
+// client3  30  15  15   <-- tighter limit, more rejections
+// client0  30  23   7
+// client1  30  27   3
