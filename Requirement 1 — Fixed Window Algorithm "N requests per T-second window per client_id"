@@ -1,0 +1,22 @@
+class FixedWindow {
+    std::mutex mtx_;
+    int    max_req_;        // N = max requests allowed
+    double window_sec_;     // T = time window in seconds
+    int    count_  = 0;     // how many requests so far
+    double window_start_;   // when current window started
+
+    Decision check() {
+        std::lock_guard<std::mutex> lk(mtx_);
+        double now = now_seconds();
+        
+        if (now - window_start_ >= window_sec_) {
+            window_start_ = now;   // new window starts
+            count_        = 0;     // reset counter
+        }
+        if (count_ < max_req_) { 
+            ++count_; 
+            return Decision::ALLOWED;    // under limit
+        }
+        return Decision::RATE_LIMITED;   // over limit
+    }
+};
