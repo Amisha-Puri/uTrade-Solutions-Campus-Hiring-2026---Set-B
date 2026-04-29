@@ -1,0 +1,8 @@
+// In test harness:
+rl.set_client_config("client3", {5, 60});
+// client3 → max 5 requests per 60 seconds
+// everyone else → max 10 requests per 60 seconds
+
+// Proved by your output:
+// client3: 15 rejected out of 30  (hit limit of 5 quickly)
+// client1: only 3 rejected        (had full limit of 10)
