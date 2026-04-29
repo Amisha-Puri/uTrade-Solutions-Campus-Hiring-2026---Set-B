@@ -1,0 +1,8 @@
+// POST /config with body {"max_requests":5,"window_seconds":10}
+// Changes limits for ALL clients WITHOUT restarting the server
+
+} else if (method == "POST" && path == "/config") {
+    json_int(body_text, "max_requests",   mr);
+    json_int(body_text, "window_seconds", ws);
+    rl.update_config(nc);   // instantly applies to everyone
+}
