@@ -1,0 +1,40 @@
+class SlidingWindowLog {
+    std::deque<double> log_;  // stores timestamp of every request
+
+    Decision check() {
+        double now    = now_seconds();
+        double cutoff = now - window_sec_;  // anything older = expired
+
+        // throw away old timestamps
+        while (!log_.empty() && log_.front() < cutoff)
+            log_.pop_front();
+
+        if ((int)log_.size() < max_req_) {
+            log_.push_back(now);         // record this request
+            return Decision::ALLOWED;
+        }
+        return Decision::RATE_LIMITED;
+    }
+};
+//Token Bucket
+class TokenBucket {
+    double capacity_;      // max tokens (= max_req)
+    double tokens_;        // current tokens available
+    double refill_rate_;   // tokens added per second = N/T
+
+    Decision check() {
+        double now     = now_seconds();
+        double elapsed = now - last_refill_;
+        
+        // refill tokens based on time passed
+        tokens_ = std::min(capacity_, 
+                           tokens_ + elapsed * refill_rate_);
+        last_refill_ = now;
+
+        if (tokens_ >= 1.0) { 
+            tokens_ -= 1.0;          // consume one token
+            return Decision::ALLOWED; 
+        }
+        return Decision::RATE_LIMITED;  // no tokens left
+    }
+};
